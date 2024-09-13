@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class UserService {
+public class UserService { // <-Field declaration where the instance of a class in injected
 
     @Autowired
     private UserRepository userRepo;
@@ -35,9 +35,11 @@ public class UserService {
     }
 
     public User findById(Long userId) {
-        Optional<User> userOpt = userRepo.findById(userId);
+        Optional<User> userOpt = userRepo.findById(userId); // find user by user id. No user return empty
         return userOpt.orElse(new User());
     }
+    // If the repository does not find a user with the given userId, instead of returning null,
+    // the method will return an empty User object.
 
     public User saveUser(User user) {
         if (user.getUserId() == null) {
@@ -109,9 +111,10 @@ public class UserService {
 
         if (user != null) {
             String accountName = "Account #" + (user.getAccounts().size() + 1);
-            Optional<Account> existingAccount = accountRepo.findByAccountName(accountName);
+            boolean accountExists = user.getAccounts().stream()
+                    .anyMatch(account -> account.getAccountName().equals(accountName));
 
-            if (existingAccount.isEmpty()) {
+            if (!accountExists) {
                 Account newAccount = new Account();
                 newAccount.setAccountName(accountName);
 
@@ -121,7 +124,9 @@ public class UserService {
                 userRepo.save(user);
                 return accountRepo.save(newAccount); //Create
             } else {
-                return existingAccount.get();
+                return user.getAccounts().stream()
+                        .filter(account -> account.getAccountName().equals(accountName))
+                        .findFirst().orElse(null);
             }
         }
         return null;
